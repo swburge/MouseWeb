@@ -11,31 +11,22 @@ library(reshape2)
 geneLogFoldData <- readRDS("data/geneLogFoldData.rds")
 Rs26.geneLogFoldData <- readRDS("data/Rs26.geneLogFoldData.rds")
 TS_GFP.geneLogFoldData <- readRDS("data/TS_GFP.geneLogFoldData.rds")
-#waz.plot<- ggplot(waz.data,
-#                  aes(x=Day,y=value,color=geneID,group=interaction(geneID)),environment = environment())
-#waz.plot+theme_bw()+stat_smooth(se=FALSE)             
+all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")           
 
 shinyServer(function(input, output) { 
   output$value <- renderPrint({ input$cellType })
   output$text1 <-renderText({paste("Gene(s) chosen: ", input$geneSymbol)})
   output$plot1 <- renderPlot ({
     gS<-unlist(strsplit(input$geneSymbol, split=" "))
-    if (input$cellType == 1) {
-    data<-geneLogFoldData[geneLogFoldData$geneID %in% gS,]
-    ggplot(data,
-           aes(x=Day,y=value,color=geneID,group=interaction(geneID)),
-    )+stat_smooth(se=FALSE)+labs(y="logFoldChange")
-    } else if (input$cellType == 2) {
-      data<-Rs26.geneLogFoldData[Rs26.geneLogFoldData$geneID %in% gS,]
+   cell<-input$cellType
+   cell<-gsub("1","all",cell)
+   cell<-gsub("2","Rs26",cell)
+   cell<-gsub("3","TS_GFP",cell)
+      data<-all.geneLogFoldData[all.geneLogFoldData$geneID %in% gS&all.geneLogFoldData$cellType %in% cell,]
       ggplot(data,
-             aes(x=Day,y=value,color=geneID,group=interaction(geneID)),
-      )+stat_smooth(se=FALSE)
-    } else if (input$cellType == 3) {
-      data<-TS_GFP.geneLogFoldData[TS_GFP.geneLogFoldData$geneID %in% gS,]
-      ggplot(data,
-             aes(x=Day,y=value,color=geneID,group=interaction(geneID)),
-             )+stat_smooth(se=FALSE)
-    }
+             aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
+             )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
+    
   })
   
   

@@ -25,10 +25,15 @@ shinyUI(fluidPage(
       #            min = 1,
       #            max = 50,
       #            value = 30)
-      radioButtons("cellType", label = h3("Radio buttons"),
-                   choices = list("All cell types" = 1, "Rs26" = 2,
-                                  "TS_GFP" = 3),selected = 1)#,
+      #radioButtons("cellType", label = h3("Radio buttons"),
+       #            choices = list("All cell types" = 1, "Rs26" = 2,
+        #                          "TS_GFP" = 3),selected = 1)#,
       #fluidRow(column(3, verbatimTextOutput("value")))
+      checkboxGroupInput("cellType", 
+                         label = h3("Cell types:"), 
+                         choices = list("All" = 1, 
+                                        "Rs26" = 2, "TS_GFP" = 3),
+                         selected = 1)
     ),
 
     # Show a plot of the generated distribution
