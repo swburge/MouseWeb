@@ -25,21 +25,26 @@ shinyUI(fluidPage(
       #            min = 1,
       #            max = 50,
       #            value = 30)
-      #radioButtons("cellType", label = h3("Radio buttons"),
-       #            choices = list("All cell types" = 1, "Rs26" = 2,
-        #                          "TS_GFP" = 3),selected = 1)#,
+      
+      radioButtons("dataType", label = h4("Data type"),
+                   choices = list("Log fold change" = 1, "Normalized counts" = 2),selected = 1
+                   ),
       #fluidRow(column(3, verbatimTextOutput("value")))
       checkboxGroupInput("cellType", 
-                         label = h3("Cell types:"), 
+                         label = h4("Cell types"), 
                          choices = list("All" = 1, 
                                         "Rs26" = 2, "TS_GFP" = 3),
                          selected = 1)
+      
     ),
 
     # Show a plot of the generated distribution
     mainPanel(
       textOutput("text1"),
+      #textOutput("text"),
       plotOutput("plot1")
+      
+      #mainPanel(textOutput("text"),textOutput("db_select"))
     )
   )
 ))

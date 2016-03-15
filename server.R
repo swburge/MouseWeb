@@ -11,7 +11,8 @@ library(reshape2)
 #geneLogFoldData <- readRDS("data/geneLogFoldData.rds")
 #Rs26.geneLogFoldData <- readRDS("data/Rs26.geneLogFoldData.rds")
 # TS_GFP.geneLogFoldData <- readRDS("data/TS_GFP.geneLogFoldData.rds")
-all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")           
+all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")    
+all.geneNormalizedCountData<- readRDS("data/all.geneNormalizedCountData.rds")
 
 shinyServer(function(input, output) {
   
@@ -29,7 +30,26 @@ shinyServer(function(input, output) {
     cell<-gsub("1","all",cell)
     cell<-gsub("2","Rs26",cell)
     cell<-gsub("3","TS_GFP",cell)
-      data<-all.geneLogFoldData[all.geneLogFoldData$geneID %in% gS&all.geneLogFoldData$cellType %in% cell,]
+    
+    currentData<-reactive({ 
+      
+      if (input$dataType == "1" ) {
+        data<- all.geneLogFoldData
+      }
+      else if (input$dataType == "2") {
+        data<- all.geneNormalizedCountData
+      }
+      
+    })
+    
+      #data<-all.geneLogFoldData[all.geneLogFoldData$geneID %in% gS&all.geneLogFoldData$cellType %in% cell,]
+      data<-currentData()
+      #data<-data[data$geneID %in% gS & data$cellType %in% cell,]
+      data<-data[data$geneID %in% gS &data$cellType %in% cell,]
+      output$text <- renderText({  
+        paste("You have selected:",data)
+      }) 
+      
       ggplot(data,
              aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
              )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
