@@ -8,24 +8,27 @@
 library(shiny)
 library(ggplot2)
 library(reshape2)
-#geneLogFoldData <- readRDS("data/geneLogFoldData.rds")
-#Rs26.geneLogFoldData <- readRDS("data/Rs26.geneLogFoldData.rds")
-# TS_GFP.geneLogFoldData <- readRDS("data/TS_GFP.geneLogFoldData.rds")
+library(RCircos)
+
 all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")    
 all.geneNormalizedCountData<- readRDS("data/all.geneNormalizedCountData.rds")
+mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
 
 shinyServer(function(input, output) {
   
+  getNames<-reactive({
+    unlist(strsplit(input$geneSymbol, split=" "))
+  })
+  
   output$value <- renderPrint({ input$cellType })
-  output$text1 <-renderText({paste("Gene(s) chosen: ", input$geneSymbol)})
+  #output$text1 <-renderText({paste("Gene(s) chosen: ", gS() )})#input$geneSymbol)})
   output$plot1 <- renderPlot ({
+    gS<-getNames()  
     
-    gS<-unlist(strsplit(input$geneSymbol, split=" "))
-    
-    validate(
-      need(length(gS)<20, "You have too many genes. Please use less than 20")
+   validate(
+    need(length(gS)<20, "You have too many genes. Please use less than 20")
     )
-    
+  
     cell<-input$cellType
     cell<-gsub("1","all",cell)
     cell<-gsub("2","Rs26",cell)
@@ -42,21 +45,41 @@ shinyServer(function(input, output) {
       
     })
     
-      #data<-all.geneLogFoldData[all.geneLogFoldData$geneID %in% gS&all.geneLogFoldData$cellType %in% cell,]
-      data<-currentData()
-      #data<-data[data$geneID %in% gS & data$cellType %in% cell,]
-      data<-data[data$geneID %in% gS &data$cellType %in% cell,]
-      output$text <- renderText({  
+    data<-currentData()
+    data<-data[data$geneID %in% gS &data$cellType %in% cell,]
+    
+    output$text <- renderText({  
         paste("You have selected:",data)
-      }) 
+    }) 
       
-      ggplot(data,
-             aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
-             )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
+    ggplot(data,
+        aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
+        )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
     
   })
   
+  circosPlot<-eventReactive(input$goButton,{
+    gS<-getNames()
+    RCircos.Set.Plot.Area()
+    outfile<-tempfile(fileext = '.svg')
+    svg(outfile,width=40,height=40)
+    plot.new()
+    plot.window(c(-2.5,2.5),c(-2.5,2.5))
+    RCircos.Chromosome.Ideogram.Plot()
+    name.col<-4
+    side<-"in"
+    track.num<-1
+    RCircos.Gene.Connector.Plot(mm10.genes[mm10.genes$Gene %in% gS,],track.num,side)
+    track.num<-2
+    RCircos.Gene.Name.Plot(mm10.genes[mm10.genes$Gene %in% gS,],name.col,track.num,side)
+    dev.off()
+    list(src=outfile,alt="NO!!!")
+  })
   
- 
+  output$circosImage <- 
+    renderImage({circosPlot()
+    },deleteFile = TRUE
+  )
+
 
 })

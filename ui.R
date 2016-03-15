@@ -34,7 +34,8 @@ shinyUI(fluidPage(
                          label = h4("Cell types"), 
                          choices = list("All" = 1, 
                                         "Rs26" = 2, "TS_GFP" = 3),
-                         selected = 1)
+                         selected = 1),
+      actionButton("goButton", "Go!")
       
     ),
 
@@ -42,7 +43,8 @@ shinyUI(fluidPage(
     mainPanel(
       textOutput("text1"),
       #textOutput("text"),
-      plotOutput("plot1")
+      plotOutput("plot1"),
+      imageOutput("circosImage",width="10%",height="10%")
       
       #mainPanel(textOutput("text"),textOutput("db_select"))
     )
