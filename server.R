@@ -8,9 +8,9 @@
 library(shiny)
 library(ggplot2)
 library(reshape2)
-geneLogFoldData <- readRDS("data/geneLogFoldData.rds")
-Rs26.geneLogFoldData <- readRDS("data/Rs26.geneLogFoldData.rds")
-TS_GFP.geneLogFoldData <- readRDS("data/TS_GFP.geneLogFoldData.rds")
+#geneLogFoldData <- readRDS("data/geneLogFoldData.rds")
+#Rs26.geneLogFoldData <- readRDS("data/Rs26.geneLogFoldData.rds")
+# TS_GFP.geneLogFoldData <- readRDS("data/TS_GFP.geneLogFoldData.rds")
 all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")           
 
 shinyServer(function(input, output) { 
