@@ -26,6 +26,10 @@ shinyUI(fluidPage(
       #            max = 50,
       #            value = 30)
       
+      selectInput("precompiled", label = h4("Some precomiled lists"), 
+                  choices = list(" " = 1 ,"Top 20 Superstem" = 2, "Top 20 Upregulated" = 3), 
+                  selected = 1),
+      
       radioButtons("dataType", label = h4("Data type"),
                    choices = list("Log fold change" = 1, "Normalized counts" = 2),selected = 1
                    ),
@@ -35,7 +39,7 @@ shinyUI(fluidPage(
                          choices = list("All" = 1, 
                                         "Rs26" = 2, "TS_GFP" = 3),
                          selected = 1),
-      actionButton("goButton", "Go!")
+      actionButton("goButton", "Make ideogram")
       
     ),
 
@@ -44,7 +48,7 @@ shinyUI(fluidPage(
       textOutput("text1"),
       #textOutput("text"),
       plotOutput("plot1"),
-      imageOutput("circosImage",width="10%",height="10%")
+      imageOutput("circosImage",width="25%",height="25%")
       
       #mainPanel(textOutput("text"),textOutput("db_select"))
     )

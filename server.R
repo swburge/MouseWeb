@@ -13,11 +13,21 @@ library(RCircos)
 all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")    
 all.geneNormalizedCountData<- readRDS("data/all.geneNormalizedCountData.rds")
 mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
+top20Up.gn<- readRDS("data/top20Up.rds")
+top20.gn<-readRDS("data/top20.superstem.rds")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   
   getNames<-reactive({
-    unlist(strsplit(input$geneSymbol, split=" "))
+    unlist(strsplit(input$geneSymbol, "\\,\\s|\\,|\\s"))
+  })
+  
+  observe ({
+   if( input$precompiled ==2) {
+     updateTextInput(session, "geneSymbol", value = top20.gn)
+   } else if (input$precompiled ==3) {
+     updateTextInput(session, "geneSymbol", value = top20Up.gn)
+   }
   })
   
   output$value <- renderPrint({ input$cellType })
@@ -26,7 +36,7 @@ shinyServer(function(input, output) {
     gS<-getNames()  
     
    validate(
-    need(length(gS)<20, "You have too many genes. Please use less than 20")
+    need(length(gS)<21, "You have too many genes. Please use less than 20")
     )
   
     cell<-input$cellType
@@ -62,7 +72,7 @@ shinyServer(function(input, output) {
     gS<-getNames()
     RCircos.Set.Plot.Area()
     outfile<-tempfile(fileext = '.svg')
-    svg(outfile,width=40,height=40)
+    svg(outfile)
     plot.new()
     plot.window(c(-2.5,2.5),c(-2.5,2.5))
     RCircos.Chromosome.Ideogram.Plot()
@@ -73,7 +83,7 @@ shinyServer(function(input, output) {
     track.num<-2
     RCircos.Gene.Name.Plot(mm10.genes[mm10.genes$Gene %in% gS,],name.col,track.num,side)
     dev.off()
-    list(src=outfile,alt="NO!!!")
+    list(src=outfile,alt="Please wait...")
   })
   
   output$circosImage <- 
