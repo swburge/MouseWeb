@@ -37,8 +37,9 @@ shinyUI(fluidPage(
       checkboxGroupInput("cellType", 
                          label = h4("Cell types"), 
                          choices = list("All" = 1, 
-                                        "Rs26" = 2, "TS_GFP" = 3),
+                                        "TS_Rs26" = 2, "TS_EGFP" = 3),
                          selected = 1),
+      downloadButton('downloadData', 'Download'),
       actionButton("goButton", "Make ideogram")
       
     ),

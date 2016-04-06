@@ -76,6 +76,40 @@ shinyServer(function(input, output, session) {
         )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
     
   })
+  dataDownload<-reactive ({
+    gS<-getNames()  
+    
+    validate(
+      need(length(gS)<21, "You have too many genes. Please use less than 20")
+    )
+    
+    cell<-input$cellType
+    cell<-gsub("1","all",cell)
+    cell<-gsub("2","Rs26",cell)
+    cell<-gsub("3","TS_GFP",cell)
+    
+    currentData<-reactive({ 
+      
+      if (input$dataType == "1" ) {
+        data<- all.geneLogFoldData
+      }
+      else if (input$dataType == "2") {
+        data<- all.geneNormalizedCountData
+      }
+      
+    })
+    
+    data<-currentData()
+    data<-data[data$geneID %in% gS &data$cellType %in% cell,]
+  
+  })
+  
+  output$downloadData <- downloadHandler(
+    filename = function() { paste('shinydata', '.csv', sep='') },
+    content = function(file) {
+      write.csv(dataDownload(), file)
+    }
+  )
   
   circosPlot<-eventReactive(input$goButton,{
     gS<-getNames()
