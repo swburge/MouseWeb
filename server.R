@@ -10,11 +10,20 @@ library(ggplot2)
 library(reshape2)
 library(RCircos)
 
+#Set up data:
 all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")    
 all.geneNormalizedCountData<- readRDS("data/all.geneNormalizedCountData.rds")
 mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
 top20Up.gn<- readRDS("data/top20Up.rds")
 top20.gn<-readRDS("data/top20.superstem.rds")
+
+#Set up Circos:
+cyto.info<-UCSC.Mouse.GRCm38.CytoBandIdeogram
+chr.exclude<-NULL
+RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
+rcircos.position<-RCircos.Get.Plot.Positions()
+rcircos.cyto<-RCircos.Get.Plot.Ideogram()
+rcircos.params<-RCircos.Get.Plot.Parameters()
 
 shinyServer(function(input, output, session) {
   
@@ -70,11 +79,11 @@ shinyServer(function(input, output, session) {
   
   circosPlot<-eventReactive(input$goButton,{
     gS<-getNames()
-    RCircos.Set.Plot.Area()
     outfile<-tempfile(fileext = '.svg')
     svg(outfile)
-    plot.new()
-    plot.window(c(-2.5,2.5),c(-2.5,2.5))
+
+    RCircos.Set.Plot.Area()
+    
     RCircos.Chromosome.Ideogram.Plot()
     name.col<-4
     side<-"in"
