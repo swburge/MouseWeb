@@ -39,7 +39,7 @@ shinyUI(fluidPage(
                          choices = list("All" = 1, 
                                         "TS_Rs26" = 2, "TS_EGFP" = 3),
                          selected = 1),
-      downloadButton('downloadData', 'Download'),
+      downloadButton('downloadData', 'Download current data'),
       actionButton("goButton", "Make ideogram")
       
     ),
@@ -48,7 +48,7 @@ shinyUI(fluidPage(
     mainPanel(
       textOutput("text1"),
       #textOutput("text"),
-      plotOutput("plot1"),
+      plotOutput("plot2"),
       imageOutput("circosImage",width="25%",height="25%")
       
       #mainPanel(textOutput("text"),textOutput("db_select"))

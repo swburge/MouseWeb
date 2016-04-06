@@ -40,43 +40,8 @@ shinyServer(function(input, output, session) {
   })
   
   output$value <- renderPrint({ input$cellType })
-  #output$text1 <-renderText({paste("Gene(s) chosen: ", gS() )})#input$geneSymbol)})
-  output$plot1 <- renderPlot ({
-    gS<-getNames()  
-    
-   validate(
-    need(length(gS)<21, "You have too many genes. Please use less than 20")
-    )
   
-    cell<-input$cellType
-    cell<-gsub("1","all",cell)
-    cell<-gsub("2","Rs26",cell)
-    cell<-gsub("3","TS_GFP",cell)
-    
-    currentData<-reactive({ 
-      
-      if (input$dataType == "1" ) {
-        data<- all.geneLogFoldData
-      }
-      else if (input$dataType == "2") {
-        data<- all.geneNormalizedCountData
-      }
-      
-    })
-    
-    data<-currentData()
-    data<-data[data$geneID %in% gS &data$cellType %in% cell,]
-    
-    output$text <- renderText({  
-        paste("You have selected:",data)
-    }) 
-      
-    ggplot(data,
-        aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
-        )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
-    
-  })
-  dataDownload<-reactive ({
+  dataForSession<-reactive ({
     gS<-getNames()  
     
     validate(
@@ -101,13 +66,20 @@ shinyServer(function(input, output, session) {
     
     data<-currentData()
     data<-data[data$geneID %in% gS &data$cellType %in% cell,]
-  
+    
   })
   
+  
+  output$plot2 <-renderPlot ({
+    ggplot(dataForSession(),
+           aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
+    )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
+  })
+    
   output$downloadData <- downloadHandler(
     filename = function() { paste('shinydata', '.csv', sep='') },
     content = function(file) {
-      write.csv(dataDownload(), file)
+      write.csv(dataForSession(), file)
     }
   )
   
