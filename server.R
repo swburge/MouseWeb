@@ -16,6 +16,7 @@ all.geneNormalizedCountData<- readRDS("data/all.geneNormalizedCountData.rds")
 mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
 top20Up.gn<- readRDS("data/top20Up.rds")
 top20.gn<-readRDS("data/top20.superstem.rds")
+data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 
 #Set up Circos:
 cyto.info<-UCSC.Mouse.GRCm38.CytoBandIdeogram

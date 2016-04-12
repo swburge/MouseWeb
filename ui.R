@@ -10,7 +10,7 @@ library(shiny)
 shinyUI(fluidPage(
 
   # Application title
-  titlePanel("MCH Mouse Data"),
+  titlePanel(HTML(("TSPort&lambda;l - <em>Beta</em>"))),
   
   
   textInput("geneSymbol", "Gene Symbol:"),
