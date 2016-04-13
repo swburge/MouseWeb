@@ -11,37 +11,48 @@ shinyUI(fluidPage(
 
   # Application title
   titlePanel(HTML(("TSPort&lambda;l - <em>Beta</em>"))),
+#   fluidRow(
+#     column(3, wellPanel(
+#       selectInput("expt_type", "Experiment type", c("RNASeq","ChIPSeq"),selected="RNASeq"
+#       )
+#     )),
+#     column(3, wellPanel(
+#       htmlOutput("selectUI")
+#      ))
+#   
+#   ),
   
-  
-  textInput("geneSymbol", "Gene Symbol:"),
+#  textInput("geneSymbol", "Gene Symbol:"),
   
 
   # Sidebar with a slider input for number of bins
   sidebarLayout(
+   
     sidebarPanel(
-      helpText("Enter standard gene Symbols. To enter more than one, place a space between each gene symbol."),
-      #sliderInput("bins",
-      #            "Number of bins:",
-      #            min = 1,
-      #            max = 50,
-      #            value = 30)
+      selectInput(
+        "exptType", "Experiment Type",
+        c(RNASeq = "rnaseq",
+          ChIPSeq = "chipseq")),
       
-      selectInput("precompiled", label = h4("Some precomiled lists"), 
-                  choices = list(" " = 1 ,"Top 20 Superstem" = 2, "Top 20 Upregulated" = 3), 
-                  selected = 1),
-      
-      radioButtons("dataType", label = h4("Data type"),
-                   choices = list("Log fold change" = 1, "Normalized counts" = 2),selected = 1
-                   ),
-      #fluidRow(column(3, verbatimTextOutput("value")))
-      checkboxGroupInput("cellType", 
-                         label = h4("Cell types"), 
-                         choices = list("All" = 1, 
-                                        "TS_Rs26" = 2, "TS_EGFP" = 3),
-                         selected = 1),
-      downloadButton('downloadData', 'Download current data'),
-      actionButton("goButton", "Make ideogram")
-      
+      # Only show this panel if the plot type is a histogram
+      conditionalPanel(
+        condition = "input.exptType == 'rnaseq'",
+        textInput("geneSymbol", "Gene Symbol:"),
+        helpText("Enter standard gene Symbols. To enter more than one, place a space between each gene symbol."),
+        selectInput("precompiled", label=h4("Some precompiled lists:"),
+                    choices = list(" "= 1,"Top 20 Superstem" = 2, "Top 20 Upregulated" = 3)),
+        radioButtons("dataType", label = h4("Data type"),
+              choices = list("Log fold change" = 1, "Normalized counts" = 2),selected = 1
+          ),
+        checkboxGroupInput("cellType", 
+              label = h4("Cell types"), 
+              choices = list("All" = 1, "TS_Rs26" = 2, "TS_EGFP" = 3), selected = 1
+          ),
+        
+        downloadButton('downloadData', 'Download current data'),
+        actionButton("goButton", "Make ideogram")
+        
+      )
     ),
 
     # Show a plot of the generated distribution
