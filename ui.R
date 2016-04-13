@@ -52,17 +52,26 @@ shinyUI(fluidPage(
         downloadButton('downloadData', 'Download current data'),
         actionButton("goButton", "Make ideogram")
         
+      ),
+      conditionalPanel(
+        condition = "input.exptType == 'chipseq'",
+        selectInput("chipdata",label=h4("Choose your experiment:"),
+                    choices = list("Tet1" = 1, "Tfap2C" = 2)),
+        actionButton("goChIPButton", "Make ideogram")
       )
     ),
 
     # Show a plot of the generated distribution
     mainPanel(
-      textOutput("text1"),
-      #textOutput("text"),
-      plotOutput("plot2"),
-      imageOutput("circosImage",width="25%",height="25%")
-      
-      #mainPanel(textOutput("text"),textOutput("db_select"))
+      conditionalPanel(condition="input.exptType == 'rnaseq'",
+        textOutput("text1"),
+        plotOutput("plot2"),
+        imageOutput("circosImage",width="25%",height="25%")
+      ),
+      conditionalPanel(condition = "input.exptType == 'chipseq'",
+      imageOutput("circosChIPImage", width = "25%", height = "25%")
+      )
+     
     )
   )
 ))

@@ -27,24 +27,16 @@ rcircos.cyto<-RCircos.Get.Plot.Ideogram()
 rcircos.params<-RCircos.Get.Plot.Parameters()
 
 shinyServer(function(input, output, session) {
-  
+ 
+   
   getNames<-reactive({
     unlist(strsplit(input$geneSymbol, "\\,\\s|\\,|\\s"))
   })
   
-  observe ({
-   if( input$precompiled ==2) {
-     updateTextInput(session, "geneSymbol", value = top20.gn)
-   } else if (input$precompiled ==3) {
-     updateTextInput(session, "geneSymbol", value = top20Up.gn)
-   }
-  })
-  
-  output$value <- renderPrint({ input$cellType })
-  
+ 
   dataForSession<-reactive ({
     gS<-getNames()  
-    
+    #gS<-reactive(getN,quoted=TRUE)
     validate(
       need(length(gS)<21, "You have too many genes. Please use less than 20")
     )
@@ -83,7 +75,7 @@ shinyServer(function(input, output, session) {
       write.csv(dataForSession(), file)
     }
   )
-  
+
   circosPlot<-eventReactive(input$goButton,{
     gS<-getNames()
     outfile<-tempfile(fileext = '.svg')
@@ -102,9 +94,34 @@ shinyServer(function(input, output, session) {
     list(src=outfile,alt="Please wait...")
   })
   
+  circosChIPPlot<-eventReactive(input$goChIPButton,{
+    #gS<-getNames()
+    outfile<-tempfile(fileext = '.svg')
+    svg(outfile)
+    
+    RCircos.Set.Plot.Area()
+    
+    RCircos.Chromosome.Ideogram.Plot()
+    name.col<-4
+    side<-"in"
+    track.num<-1
+    RCircos.Gene.Connector.Plot(mm10.genes[mm10.genes$Gene %in% gS,],track.num,side)
+    track.num<-2
+    RCircos.Gene.Name.Plot(mm10.genes[mm10.genes$Gene %in% gS,],name.col,track.num,side)
+    side<-"out"
+    track.num<-1
+    RCircos.Histogram.Plot(circos.histo.data,data.col=4,track.num,side)
+    dev.off()
+    list(src=outfile,alt="Please wait...")
+  })
+  
   output$circosImage <- 
     renderImage({circosPlot()
     },deleteFile = TRUE
+  )
+  output$circosChIPImage <-
+    renderImage({circosChIPPlot()
+      },deleteFile = TRUE
   )
 
 
