@@ -18,13 +18,18 @@ top20Up.gn<- readRDS("data/top20Up.rds")
 top20.gn<-readRDS("data/top20.superstem.rds")
 data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 
+
+
 #Set up Circos:
 cyto.info<-UCSC.Mouse.GRCm38.CytoBandIdeogram
-chr.exclude<-NULL
-RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
-rcircos.position<-RCircos.Get.Plot.Positions()
-rcircos.cyto<-RCircos.Get.Plot.Ideogram()
-rcircos.params<-RCircos.Get.Plot.Parameters()
+#chr.exclude<-NULL
+#RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
+#rcircos.position<-RCircos.Get.Plot.Positions()
+#rcircos.cyto<-RCircos.Get.Plot.Ideogram()
+#rcircos.params<-RCircos.Get.Plot.Parameters()
+#rcircos.params$track.background<-"white"
+#rcircos.params$tile.color<-"pink"
+#RCircos.Reset.Plot.Parameters(rcircos.params)
 
 shinyServer(function(input, output, session) {
  
@@ -33,6 +38,14 @@ shinyServer(function(input, output, session) {
     unlist(strsplit(input$geneSymbol, "\\,\\s|\\,|\\s"))
   })
   
+  observe ({
+    
+    if( input$precompiled ==2) {
+      updateTextInput(session, "geneSymbol", value = top20.gn)
+    } else if (input$precompiled ==3) {
+      updateTextInput(session, "geneSymbol", value = top20Up.gn)
+    }
+  })
  
   dataForSession<-reactive ({
     gS<-getNames()  
@@ -95,22 +108,40 @@ shinyServer(function(input, output, session) {
   })
   
   circosChIPPlot<-eventReactive(input$goChIPButton,{
-    #gS<-getNames()
+    chipDataList<-function(n) 
+      if (n == 1) { d1 <-readRDS("data/R26_Tet1_ChIPSeq.rds")}
+      else if (n == 2) { d1 <- readRDS("data/7C_Tet1_KO_ChIPSeq.rds")}
+      else {d1 <-NULL}
+    
+    currentChIPData1<- reactive ({
+      chipDataList(input$chipdata)
+    })
+    currentChIPData2<- reactive({
+      chipDataList(input$chipdata2)
+    })
+    
+  #gS<-getNames()
     outfile<-tempfile(fileext = '.svg')
     svg(outfile)
     
     RCircos.Set.Plot.Area()
-    
+    chr.exclude<-NULL
+    #chr.exclude<-c("chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chrX","chrY")
+    RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
+    rcircos.position<-RCircos.Get.Plot.Positions()
+    rcircos.cyto<-RCircos.Get.Plot.Ideogram()
+    rcircos.params<-RCircos.Get.Plot.Parameters()
+    rcircos.params$track.background<-"white"
+    rcircos.params$tile.color<-"blue"
+    RCircos.Reset.Plot.Parameters(rcircos.params)
     RCircos.Chromosome.Ideogram.Plot()
-    name.col<-4
-    side<-"in"
-    track.num<-1
-    RCircos.Gene.Connector.Plot(mm10.genes[mm10.genes$Gene %in% gS,],track.num,side)
-    track.num<-2
-    RCircos.Gene.Name.Plot(mm10.genes[mm10.genes$Gene %in% gS,],name.col,track.num,side)
-    side<-"out"
-    track.num<-1
-    RCircos.Histogram.Plot(circos.histo.data,data.col=4,track.num,side)
+     side<-"in"
+     track.num<-1
+    RCircos.Tile.Plot(currentChIPData1(),track.num,side)
+    if (!is.null (currentChIPData2)) {
+      track.num<-2
+      RCircos.Tile.Plot(currentChIPData2(),track.num,side)
+    }
     dev.off()
     list(src=outfile,alt="Please wait...")
   })
