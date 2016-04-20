@@ -56,9 +56,9 @@ shinyUI(fluidPage(
       conditionalPanel(
         condition = "input.exptType == 'chipseq'",
         selectInput("chipdata",label=h4("Choose your experiment:"),
-                    choices = list("Tet1" = 1, "7C Tet1 KO" = 2, "Tfap2C" = 3)),
+                    choices = list("Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
         selectInput("chipdata2",label=h4("Chose second dataset:"),
-                    choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tfap2C" = 3)),
+                    choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
         actionButton("goChIPButton", "Make ideogram")
       )
     ),

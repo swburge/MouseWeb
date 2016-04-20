@@ -17,19 +17,20 @@ mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
 top20Up.gn<- readRDS("data/top20Up.rds")
 top20.gn<-readRDS("data/top20.superstem.rds")
 data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
+ChIPSeqMetaData<-as.data.frame(list(number=c(1:3),name=c("Tet1" ,"7C Tet1 KO","Tet1 WT/KO Overlaps")))
 
 
 
 #Set up Circos:
 cyto.info<-UCSC.Mouse.GRCm38.CytoBandIdeogram
-#chr.exclude<-NULL
-#RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
-#rcircos.position<-RCircos.Get.Plot.Positions()
-#rcircos.cyto<-RCircos.Get.Plot.Ideogram()
-#rcircos.params<-RCircos.Get.Plot.Parameters()
-#rcircos.params$track.background<-"white"
-#rcircos.params$tile.color<-"pink"
-#RCircos.Reset.Plot.Parameters(rcircos.params)
+chr.exclude<-NULL
+RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
+rcircos.position<-RCircos.Get.Plot.Positions()
+rcircos.cyto<-RCircos.Get.Plot.Ideogram()
+rcircos.params<-RCircos.Get.Plot.Parameters()
+rcircos.params$track.background<-"white"
+rcircos.params$tile.color<-"pink"
+RCircos.Reset.Plot.Parameters(rcircos.params)
 
 shinyServer(function(input, output, session) {
  
@@ -111,6 +112,7 @@ shinyServer(function(input, output, session) {
     chipDataList<-function(n) 
       if (n == 1) { d1 <-readRDS("data/R26_Tet1_ChIPSeq.rds")}
       else if (n == 2) { d1 <- readRDS("data/7C_Tet1_KO_ChIPSeq.rds")}
+      else if (n == 3) { d1 <- readRDS("data/Tet1_WT_KO.overlaps.rds")}
       else {d1 <-NULL}
     
     currentChIPData1<- reactive ({
@@ -138,10 +140,16 @@ shinyServer(function(input, output, session) {
      side<-"in"
      track.num<-1
     RCircos.Tile.Plot(currentChIPData1(),track.num,side)
-    if (!is.null (currentChIPData2)) {
+    if (input$chipdata2 != 100) {
       track.num<-2
       RCircos.Tile.Plot(currentChIPData2(),track.num,side)
     }
+    name.col<-4
+    side<-"out"
+    track.num<-1
+    RCircos.Gene.Connector.Plot(mm10.genes[mm10.genes$Gene %in% currentChIPData1()$symbol,],track.num,side)
+    track.num<-2
+    RCircos.Gene.Name.Plot(mm10.genes[mm10.genes$Gene %in% currentChIPData1()$symbol,],name.col,track.num,side)
     dev.off()
     list(src=outfile,alt="Please wait...")
   })
