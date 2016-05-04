@@ -7,65 +7,56 @@
 
 library(shiny)
 
-shinyUI(fluidPage(
+shinyUI(fluidPage(theme = shinytheme("flatly"),
 
   # Application title
   titlePanel(HTML(("TSPort&lambda;l - <em>Beta</em>"))),
-
-  sidebarLayout(
-   
-    sidebarPanel(
-      selectInput(
-        "exptType", "Experiment Type",
-        c(RNASeq = "rnaseq",
-          ChIPSeq = "chipseq")),
-      
-      # Only show this panel if the plot type is a histogram
-      conditionalPanel(
-        condition = "input.exptType == 'rnaseq'",
-       # tags$input(type="text", id="GenesIn"),
-        textInput("geneSymbol", "Gene Symbol:"),
-        helpText("Enter up to 20 standard gene Symbols. To enter more than one, place a space between each gene symbol."),
-        selectInput("precompiled", label=h4("Some precompiled lists:"),
-                    choices = list(" "= 1,"Top 20 Superstem" = 2, "Top 20 Upregulated" = 3)),
-        radioButtons("dataType", label = h4("Data type"),
-              choices = list("Log fold change" = 1, "Normalized counts" = 2),selected = 1
-          ),
-        checkboxGroupInput("cellType", 
-              label = h4("Cell types"), 
-              choices = list("All" = 1, "TS_Rs26" = 2, "TS_EGFP" = 3), selected = 1
-          ),
-        
-        downloadButton('downloadData', 'Download current data'),
-        actionButton("goButton", "Make ideogram"),
-        checkboxInput("checkHeat",label = "Add expression heatmap",value=FALSE)
-        
-      ),
-      conditionalPanel(
-        condition = "input.exptType == 'chipseq'",
-        selectInput("chipdata",label=h4("Choose your experiment:"),
-                    choices = list("Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
-        selectInput("chipdata2",label=h4("Chose second dataset:"),
-                    choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
-        actionButton("goChIPButton", "Make ideogram")
+  
+    tabsetPanel(
+      tabPanel("RNASeq",
+        sidebarLayout(
+          sidebarPanel( 
+          textInput("geneSymbol", "Gene Symbol:"),
+          helpText("Enter up to 20 standard gene Symbols. To enter more than one, place a space between each gene symbol."),
+          selectInput("precompiled", label=h4("Some precompiled lists:"),
+            choices = list(" "= 1,"Top 20 Superstem" = 2, "Top 20 Upregulated" = 3)
+            ),
+          radioButtons("dataType", label = h4("Data type"),
+             choices = list("Log fold change" = 1, "Normalized counts" = 2),selected = 1
+            ),
+          checkboxGroupInput("cellType", 
+             label = h4("Cell types"), 
+             choices = list("All" = 1, "TS_Rs26" = 2, "TS_EGFP" = 3), selected = 1
+            ),
+          downloadButton('downloadData', 'Download current data')
+          #         #Code for allowing users to generate Circos plots, with their genes of interest labelled
+          #         #Currently commented out as it's very slow and of debatable utility. 
+          #         #,
+          #         #actionButton("goButton", "Make ideogram"),
+          #         #checkboxInput("checkHeat",label = "Add expression heatmap",value=FALSE)
+        ),
+        mainPanel(
+          plotOutput("plotRNASeq")
+          )
       )
     ),
-
-    # Show a plot of the generated distribution
-    mainPanel(
-      conditionalPanel(condition="input.exptType == 'rnaseq'",
-        textOutput("text1"),
-        plotOutput("plot2"),
-        imageOutput("circosImage",width="25%",height="25%")
-      ),
-      conditionalPanel(condition = "input.exptType == 'chipseq'",
-      imageOutput("circosChIPImage", width = "50%", height = "50%")
+    tabPanel("ChIPSeq",
+      sidebarLayout(
+          sidebarPanel(
+              selectInput("chipdata",label=h4("Choose your experiment:"),
+                  choices = list("Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
+              selectInput("chipdata2",label=h4("Chose second dataset:"),
+                  choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
+              actionButton("goChIPButton", "Make ideogram")
+          ),
+          mainPanel(
+            imageOutput("circosChIPImage", width = "50%", height = "50%")
+          )
+        )
       )
-     
-    )
-  ),
+    ),
   
-  
+
   singleton(
     tags$div(tags$script(src = "message-handler.js"))
   ),  
