@@ -17,8 +17,9 @@ mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
 top20Up.gn<- readRDS("data/top20Up.rds")
 top20.gn<-readRDS("data/top20.superstem.rds")
 data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
-ChIPSeqMetaData<-as.data.frame(list(number=c(1:3),name=c("Tet1" ,"7C Tet1 KO","Tet1 WT/KO Overlaps")))
-
+#ChIPSeqMetaData<-as.data.frame(list(number=c(1:3),name=c("Tet1" ,"7C Tet1 KO","Tet1 WT/KO Overlaps")))
+ChIPSeqMetaData<-list("No data" = 100, "Tet1" = 1,"7C Tet1 KO" = 2,"Tet1 WT/KO Overlaps" = 3)
+Master.Day1vsDay0.Heatmap<-readRDS("data/Master.Day1vsDay0.lFC.heatmap.rds")
 
 
 #Set up Circos:
@@ -38,6 +39,14 @@ shinyServer(function(input, output, session) {
   getNames<-reactive({
     unlist(strsplit(input$geneSymbol, "\\,\\s|\\,|\\s"))
   })
+  
+  
+  observe({
+    names<-getNames()
+    session$sendCustomMessage(type = 'testmessage',
+                              message = names[1])
+  })
+ 
   
   observe ({
     
@@ -104,10 +113,18 @@ shinyServer(function(input, output, session) {
     RCircos.Gene.Connector.Plot(mm10.genes[mm10.genes$Gene %in% gS,],track.num,side)
     track.num<-2
     RCircos.Gene.Name.Plot(mm10.genes[mm10.genes$Gene %in% gS,],name.col,track.num,side)
+    if (input$checkHeat) {
+      track.num<-1
+      RCircos.Heatmap.Plot(Master.Day1vsDay0.Heatmap,data.col = 5 ,track.num,side)
+    }
     dev.off()
     list(src=outfile,alt="Please wait...")
   })
-  
+  observe({
+    x<-input$chipdata
+    newChoices<-ChIPSeqMetaData[ChIPSeqMetaData != x]
+    updateSelectInput(session,"chipdata2",choices = newChoices)
+  })
   circosChIPPlot<-eventReactive(input$goChIPButton,{
     chipDataList<-function(n) 
       if (n == 1) { d1 <-readRDS("data/R26_Tet1_ChIPSeq.rds")}
@@ -121,6 +138,7 @@ shinyServer(function(input, output, session) {
     currentChIPData2<- reactive({
       chipDataList(input$chipdata2)
     })
+
     
   #gS<-getNames()
     outfile<-tempfile(fileext = '.svg')
@@ -128,7 +146,8 @@ shinyServer(function(input, output, session) {
     
     RCircos.Set.Plot.Area()
     chr.exclude<-NULL
-    #chr.exclude<-c("chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chrX","chrY")
+    #chr.exclude<-c("chr9", "chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chrX","chrY")
+    #chr.exclude<-c("chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chrX","chrY")
     RCircos.Set.Core.Components(cyto.info,chr.exclude,tracks.inside =5 ,tracks.outside = 1)
     rcircos.position<-RCircos.Get.Plot.Positions()
     rcircos.cyto<-RCircos.Get.Plot.Ideogram()

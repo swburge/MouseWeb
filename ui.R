@@ -11,21 +11,7 @@ shinyUI(fluidPage(
 
   # Application title
   titlePanel(HTML(("TSPort&lambda;l - <em>Beta</em>"))),
-#   fluidRow(
-#     column(3, wellPanel(
-#       selectInput("expt_type", "Experiment type", c("RNASeq","ChIPSeq"),selected="RNASeq"
-#       )
-#     )),
-#     column(3, wellPanel(
-#       htmlOutput("selectUI")
-#      ))
-#   
-#   ),
-  
-#  textInput("geneSymbol", "Gene Symbol:"),
-  
 
-  # Sidebar with a slider input for number of bins
   sidebarLayout(
    
     sidebarPanel(
@@ -37,8 +23,9 @@ shinyUI(fluidPage(
       # Only show this panel if the plot type is a histogram
       conditionalPanel(
         condition = "input.exptType == 'rnaseq'",
+       # tags$input(type="text", id="GenesIn"),
         textInput("geneSymbol", "Gene Symbol:"),
-        helpText("Enter standard gene Symbols. To enter more than one, place a space between each gene symbol."),
+        helpText("Enter up to 20 standard gene Symbols. To enter more than one, place a space between each gene symbol."),
         selectInput("precompiled", label=h4("Some precompiled lists:"),
                     choices = list(" "= 1,"Top 20 Superstem" = 2, "Top 20 Upregulated" = 3)),
         radioButtons("dataType", label = h4("Data type"),
@@ -50,7 +37,8 @@ shinyUI(fluidPage(
           ),
         
         downloadButton('downloadData', 'Download current data'),
-        actionButton("goButton", "Make ideogram")
+        actionButton("goButton", "Make ideogram"),
+        checkboxInput("checkHeat",label = "Add expression heatmap",value=FALSE)
         
       ),
       conditionalPanel(
@@ -71,9 +59,17 @@ shinyUI(fluidPage(
         imageOutput("circosImage",width="25%",height="25%")
       ),
       conditionalPanel(condition = "input.exptType == 'chipseq'",
-      imageOutput("circosChIPImage", width = "25%", height = "25%")
+      imageOutput("circosChIPImage", width = "50%", height = "50%")
       )
      
     )
-  )
+  ),
+  
+  
+  singleton(
+    tags$div(tags$script(src = "message-handler.js"))
+  ),  
+
+    includeHTML("www/index.html")  
+
 ))
