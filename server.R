@@ -44,9 +44,14 @@ shinyServer(function(input, output, session) {
   observe({
     names<-getNames()
     session$sendCustomMessage(type = 'testmessage',
-                              message = names[1])
+                              message = list(first = names[1],all=names))
+  
+    })
+  observe({
+    n<-getNames()
+    session$sendCustomMessage(type = 'getN',
+                              message = n)
   })
- 
   
   observe ({
     
@@ -86,7 +91,7 @@ shinyServer(function(input, output, session) {
   })
   
   
-  output$plot2 <-renderPlot ({
+  output$plotRNASeq <-renderPlot ({
     ggplot(dataForSession(),
            aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
     )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)

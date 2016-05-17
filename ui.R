@@ -7,7 +7,7 @@
 
 library(shiny)
 
-shinyUI(fluidPage(theme = shinytheme("flatly"),
+shinyUI(fluidPage(
 
   # Application title
   titlePanel(HTML(("TSPort&lambda;l - <em>Beta</em>"))),
@@ -36,10 +36,14 @@ shinyUI(fluidPage(theme = shinytheme("flatly"),
           #         #checkboxInput("checkHeat",label = "Add expression heatmap",value=FALSE)
         ),
         mainPanel(
-          plotOutput("plotRNASeq")
+          plotOutput("plotRNASeq"),
+          tags$style(type="text/css", ".tab-content { overflow: visible; }")
           )
-      )
-    ),
+      ),
+    style = "overflow:hidden; width=50%") ,
+    # , 
+    #tags$div(id = "rnaseq-holder")),
+    
     tabPanel("ChIPSeq",
       sidebarLayout(
           sidebarPanel(
@@ -47,19 +51,22 @@ shinyUI(fluidPage(theme = shinytheme("flatly"),
                   choices = list("Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
               selectInput("chipdata2",label=h4("Chose second dataset:"),
                   choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
-              actionButton("goChIPButton", "Make ideogram")
+              actionButton("goChIPButton", "Make ideogram"),
+              tags$style(type="text/css", ".tab-content { overflow: visible; }")
           ),
           mainPanel(
-            imageOutput("circosChIPImage", width = "50%", height = "50%")
+            imageOutput("circosChIPImage", width = "50%", height = "50%"),
+            tags$style(type="text/css", ".tab-content { overflow: visible; }")
           )
         )
       )
-    ),
+    ,tags$head(tags$style(type="text/css", ".container-fluid {  max-width: 80%; /* or 950px */}"))),
   
 
-  singleton(
-    tags$div(tags$script(src = "message-handler.js"))
-  ),  
+  #singleton(
+    #tags$div(tags$script(src = "message-handler.js")),
+    #tags$div(tags$script(type = "text/javascript",message()))
+  #),  
 
     includeHTML("www/index.html")  
 
