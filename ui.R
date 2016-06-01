@@ -8,12 +8,12 @@
 library(shiny)
 
 shinyUI(fluidPage(
-
+  
   # Application title
   titlePanel(HTML(("TSPort&lambda;l - <em>Beta</em>"))),
   
-    tabsetPanel(
-      tabPanel("RNASeq",
+    tabsetPanel(id = "tabs",
+      tabPanel("RNASeq", value = "RNASEQ",
         sidebarLayout(
           sidebarPanel( 
           textInput("geneSymbol", "Gene Symbol:"),
@@ -37,6 +37,7 @@ shinyUI(fluidPage(
         ),
         mainPanel(
           plotOutput("plotRNASeq"),
+          
           tags$style(type="text/css", ".tab-content { overflow: visible; }")
           )
       ),
@@ -44,7 +45,7 @@ shinyUI(fluidPage(
     # , 
     #tags$div(id = "rnaseq-holder")),
     
-    tabPanel("ChIPSeq",
+    tabPanel("ChIPSeq", value = "CHIP",
       sidebarLayout(
           sidebarPanel(
               selectInput("chipdata",label=h4("Choose your experiment:"),
@@ -60,14 +61,8 @@ shinyUI(fluidPage(
           )
         )
       )
-    ,tags$head(tags$style(type="text/css", ".container-fluid {  max-width: 80%; /* or 950px */}"))),
+    ,tags$head(tags$style(type="text/css", ".container-fluid {  max-width: 80%; /* or 950px */}"))
+    ),
+  dalliancROutput("dalliance",width="100%", height="100%")
   
-
-  #singleton(
-    #tags$div(tags$script(src = "message-handler.js")),
-    #tags$div(tags$script(type = "text/javascript",message()))
-  #),  
-
-    includeHTML("www/index.html")  
-
 ))

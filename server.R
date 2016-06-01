@@ -9,6 +9,8 @@ library(shiny)
 library(ggplot2)
 library(reshape2)
 library(RCircos)
+library(dalliancR)
+library(rjson)
 
 #Set up data:
 all.geneLogFoldData<- readRDS("data/all.geneLogFoldData.rds")    
@@ -20,7 +22,7 @@ data(UCSC.Mouse.GRCm38.CytoBandIdeogram)
 #ChIPSeqMetaData<-as.data.frame(list(number=c(1:3),name=c("Tet1" ,"7C Tet1 KO","Tet1 WT/KO Overlaps")))
 ChIPSeqMetaData<-list("No data" = 100, "Tet1" = 1,"7C Tet1 KO" = 2,"Tet1 WT/KO Overlaps" = 3)
 Master.Day1vsDay0.Heatmap<-readRDS("data/Master.Day1vsDay0.lFC.heatmap.rds")
-
+rnaseq.data<-fromJSON(file="data/rnaseq_data.json")
 
 #Set up Circos:
 cyto.info<-UCSC.Mouse.GRCm38.CytoBandIdeogram
@@ -35,24 +37,22 @@ RCircos.Reset.Plot.Parameters(rcircos.params)
 
 shinyServer(function(input, output, session) {
  
-   
+  #Function to process gene names provided by user: 
   getNames<-reactive({
     unlist(strsplit(input$geneSymbol, "\\,\\s|\\,|\\s"))
   })
   
-  
+  #Code here to pass data back to the UI for use in e.g. Javascript.
+  #Partly redundant by widgetification of Dalliance
+  #Originally used to hand gene name list back to feed into Dalliance search:
   observe({
     names<-getNames()
     session$sendCustomMessage(type = 'testmessage',
                               message = list(first = names[1],all=names))
   
     })
-  observe({
-    n<-getNames()
-    session$sendCustomMessage(type = 'getN',
-                              message = n)
-  })
   
+  #Set up precompiled data:
   observe ({
     
     if( input$precompiled ==2) {
@@ -62,47 +62,68 @@ shinyServer(function(input, output, session) {
     }
   })
  
+  #Now get and validate gene names:
   dataForSession<-reactive ({
     gS<-getNames()  
-    #gS<-reactive(getN,quoted=TRUE)
     validate(
       need(length(gS)<21, "You have too many genes. Please use less than 20")
     )
     
-    cell<-input$cellType
-    cell<-gsub("1","all",cell)
-    cell<-gsub("2","Rs26",cell)
-    cell<-gsub("3","TS_GFP",cell)
-    
-    currentData<-reactive({ 
-      
-      if (input$dataType == "1" ) {
-        data<- all.geneLogFoldData
-      }
-      else if (input$dataType == "2") {
-        data<- all.geneNormalizedCountData
-      }
+  #Get cell types.  
+  cell<-input$cellType
+  #I know, I know.... very ugly but functional:
+  cell<-gsub("1","all",cell)
+  cell<-gsub("2","Rs26",cell)
+  cell<-gsub("3","TS_GFP",cell)
+  
+  #Get data sources based on user requesting LFC or normalized counts:
+  
+  currentData<-reactive({ 
+    if (input$dataType == "1" ) {
+      data<- all.geneLogFoldData
+    }
+    else if (input$dataType == "2") {
+      data<- all.geneNormalizedCountData
+    }
       
     })
     
-    data<-currentData()
-    data<-data[data$geneID %in% gS &data$cellType %in% cell,]
+  #Filter data based on gene request and cell type:
+  data<-currentData()
+  data<-data[data$geneID %in% gS &data$cellType %in% cell,]
     
   })
   
+  #Get data for genome browser:
+   browserData<-reactive({
+      if (input$tabs == "RNASEQ") {
+        bData<-rnaseq.data
+      } else {
+        
+      }
+    })
+#Outputs: from here on this is all about making things look pretty:
   
+  #Plot RNAseq data over time series:
   output$plotRNASeq <-renderPlot ({
     ggplot(dataForSession(),
            aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
     )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
   })
-    
+  
+  #Self explanitory:  
   output$downloadData <- downloadHandler(
     filename = function() { paste('shinydata', '.csv', sep='') },
     content = function(file) {
       write.csv(dataForSession(), file)
     }
   )
+  
+  #Code to produce the Dalliance HTML widget
+  #Gene name provided by text at the moment, need to wire this in to user choices:
+  
+  output$dalliance<-renderDalliancR(dalliancR("Ascl2",browserData()))
+  #output$dallianceCHIP<-renderDalliancR(dalliancR())
 
   circosPlot<-eventReactive(input$goButton,{
     gS<-getNames()
