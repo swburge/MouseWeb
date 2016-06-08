@@ -54,7 +54,7 @@ shinyUI(fluidPage(
                   choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
               radioButtons("dataOperation", label = h4("Display in table:"),
                            choices = list("Overlap" = 1, "Difference" = 2)),
-              actionButton("goChIPButton", "Make ideogram"),
+              actionButton("goChIPButton", "Compare peaks"),
               tags$style(type="text/css", ".tab-content { overflow: visible; }")
           ),
           mainPanel(
