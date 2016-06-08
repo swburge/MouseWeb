@@ -27,7 +27,7 @@ Tet1_wt.data<-list(gr.df = "data/R26_Tet1_wt.rds",
                    gr = "data/R26_Tet1_wt.gr.rds")
 Tet1_7C_KO.data<-list(gr.df = "data/Tet1_7C.KO.rds",
                       gr = "data/Tet1_7C_KO.gr.rds")
-
+chipseq.library<-list(Tet1_wt.data,Tet1_7C_KO.data)
 ChIPSeqMetaData<-list("No data" = 100, "Tet1" = 1,"7C Tet1 KO" = 2,"Tet1 WT/KO Overlaps" = 3)
 chipseq.data<-fromJSON(file="data/chipseq_data.json")
 Tet1_wt.chip<-readRDS("data/R26_Tet1_wt.rds")
@@ -37,6 +37,7 @@ shinyServer(function(input, output, session) {
   
   #Set some values with null defaults (r is used for RNAseq data):
   r<-reactiveValues(data=NULL,browser=NULL,geneSymbols=NULL)
+  c<-reactiveValues(data=NULL,browser=NULL,index=NULL,set1=NULL,set2=NULL)
   
   #Now set up browser data for the RNAseq tab:
   #Could modify this to also set ChIPseq data
@@ -83,22 +84,45 @@ shinyServer(function(input, output, session) {
     x<-r$data
     x<-x[x$geneID %in% gS &x$cellType %in% cell,]
     
-  })#end dataForPlot
+  })
+  #end dataForPlot, and most RNASeqtab stuff
   
+  #Now for the ChIPseq panel:
   
   getChIPBrowserData<-reactive({
     chipIndex<-c(input$chipdata,input$chipdata2)
+    x<-chipIndex[chipIndex!=100]
+    data<-chipseq.data[as.numeric(x)]
+  })
+  
+  observeEvent(input$chipdata,{
+     c$set1<-as.numeric(input$chipdata)
+     #print(c$set1)
+   })
+  observeEvent(input$chipdata2,{
+    c$set2<-as.numeric(input$chipdata2)
+    #print(c$set2)
+  })
+ 
+  
+  #Populate second drop down; remove the option chosen in the first drop down so you don't compare the same thing:
+  observe({
+    x<-input$chipdata
+    newChoices<-ChIPSeqMetaData[ChIPSeqMetaData != x]
+    updateSelectInput(session,"chipdata2",choices = newChoices)
+  })
+  
+  comparedPeaks<-eventReactive(input$goChIPButton, {
+    foo<-findOverlapsOfPeaks(reduce(readRDS(chipseq.library[[1]]$gr)),reduce(readRDS(chipseq.library[[2]]$gr)))
+    foo<-foo$peaklist[[3]]
+    foo<-as.data.frame(foo)
+    return(foo)
+      })
+  
+  
 
-    data<-chipseq.data[as.numeric(chipIndex)]
-  })
-  getChIPPeakData<-reactive({
-  #  print(as.numeric(input$chipdata))
-  })
   
-  #Functions to compare ChIPSeq datasets. 
-  #Firstly, get overlapping regions:
-   
-  
+    
   #Get data for genome browser:
    browserData<-reactive({
       if (input$tabs == "RNASEQ") {
@@ -116,11 +140,7 @@ shinyServer(function(input, output, session) {
             aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
      )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
    })
-  
-  output$chipTable<-renderDataTable({
-    Tet1_wt.chip[,c(1,2,3,4,12,13,16)]
-  },options = list(lengthMenu = c(5, 10, 20), pageLength = 10))
-  
+
   #Self explanitory:  
   output$downloadData <- downloadHandler(
     filename = function() { paste('shinydata', '.csv', sep='') },
@@ -134,10 +154,16 @@ shinyServer(function(input, output, session) {
   
   output$dalliance<-renderDalliancR(dalliancR("Ascl2",browserData()))
   #output$dallianceCHIP<-renderDalliancR(dalliancR())
+  
+  output$chipTable<-renderDataTable({
+    #Tet1_wt.chip[,c(1,2,3,4,12,13,16)]
+    #as.data.frame(comparedPeaks()$peaklist[[3]])
+    if(input$goChIPButton == 0){
+      Tet1_wt.chip[,c(1,2,3,4,12,13,16)]
+    } else {
+      comparedPeaks()
+    }
+  },options = list(lengthMenu = c(5, 10, 20), pageLength = 10))
+  
 
-  observe({
-    x<-input$chipdata
-    newChoices<-ChIPSeqMetaData[ChIPSeqMetaData != x]
-    updateSelectInput(session,"chipdata2",choices = newChoices)
-  })
 })
