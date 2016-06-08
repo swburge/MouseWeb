@@ -38,25 +38,29 @@ shinyUI(fluidPage(
         mainPanel(
           plotOutput("plotRNASeq"),
           
+          #Annoying hack to stop window scroll bars appearing:
           tags$style(type="text/css", ".tab-content { overflow: visible; }")
           )
       ),
     style = "overflow:hidden; width=50%") ,
-    # , 
-    #tags$div(id = "rnaseq-holder")),
+
     
-    tabPanel("ChIPSeq", value = "CHIP",
+    tabPanel("ChIPSeq", value = "CHIPSEQ",
       sidebarLayout(
           sidebarPanel(
               selectInput("chipdata",label=h4("Choose your experiment:"),
                   choices = list("Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
               selectInput("chipdata2",label=h4("Chose second dataset:"),
                   choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)),
+              radioButtons("dataOperation", label = h4("Display in table:"),
+                           choices = list("Overlap" = 1, "Difference" = 2)),
               actionButton("goChIPButton", "Make ideogram"),
               tags$style(type="text/css", ".tab-content { overflow: visible; }")
           ),
           mainPanel(
-            imageOutput("circosChIPImage", width = "50%", height = "50%"),
+            dataTableOutput('chipTable'),
+            
+            #imageOutput("circosChIPImage", width = "50%", height = "50%"),
             tags$style(type="text/css", ".tab-content { overflow: visible; }")
           )
         )
