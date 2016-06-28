@@ -16,9 +16,10 @@ Shiny.addCustomMessageHandler("testmessage",
       console.log('Error in gene search: ' + err)
     }
     );
-   var geneList = message.all;
+   geneList = message.all;
+   //window.geneL = message.all;
    return geneList;
-   //document.getElementById("genelist").innerHTML = message.all;
+   document.getElementById("genelist").innerHTML = message.all;
   
   }
  

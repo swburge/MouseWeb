@@ -1,3 +1,13 @@
 .Rproj.user
 .Rhistory
 .RData
+data
+rsconnect
+www/fonts
+www/pileup
+www/pileup.css
+www/playground.js
+www/pile.js
+www/mm10.2bit
+.DS_Store
+RS26_Tet1_treat_pileup.bdg

@@ -6,6 +6,7 @@
 #
 
 library(shiny)
+library(dalliancR)
 
 shinyUI(fluidPage(
   
