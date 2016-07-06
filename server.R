@@ -23,6 +23,7 @@ rnaseq.data<-list(geneLogFoldData = "data/all.geneLogFoldData.rds",
                top20.gn = "data/top20.superstem.rds"
                )
 rnaseq.browser<-fromJSON(file="data/rnaseq_data.json")
+
 Tet1_wt.data<-list(gr.df = "data/R26_Tet1_wt.rds",
                    gr = "data/R26_Tet1_wt.gr.rds")
 Tet1_7C_KO.data<-list(gr.df = "data/Tet1_7C.KO.rds",
@@ -31,6 +32,8 @@ chipseq.library<-list(Tet1_wt.data,Tet1_7C_KO.data)
 ChIPSeqMetaData<-list("No data" = 100, "Tet1" = 1,"7C Tet1 KO" = 2,"Tet1 WT/KO Overlaps" = 3)
 chipseq.data<-fromJSON(file="data/chipseq_data.json")
 Tet1_wt.chip<-readRDS("data/R26_Tet1_wt.rds")
+Tet1_rnaseq.browser<-fromJSON(file="data/Tet1_rnaseq.json")
+Tet1_rnaseq.data<-fromJSON(file="data/Tet1_rnaseq_data.json")
 
 
 shinyServer(function(input, output, session) {
@@ -42,9 +45,9 @@ shinyServer(function(input, output, session) {
   #Now set up browser data for the RNAseq tab:
   #Could modify this to also set ChIPseq data
   #but that is more complicated as ChIPseq browser data not static (depends on user selected experiment:)
-  observeEvent(input$tabs == "RNASEQ", {
-    r$browser <- rnaseq.browser
-  })
+ # observeEvent(input$tabs == "RNASEQ", {
+#    r$browser <- rnaseq.browser
+#  })
   
   #Now wait for user to select logfold vs normalized counts:
   observeEvent(input$dataType,{
@@ -119,16 +122,30 @@ shinyServer(function(input, output, session) {
     return(foo)
       })
   
+  tetDataTable<-reactive({
+    x<-input$tetData
+    f<-Tet1_rnaseq.data[[as.numeric(x)]]$file
+    return(readRDS(f))
+  })
   
 
-  
+  #tracks<-reactiveValues(rnaseq.browser)
     
   #Get data for genome browser:
    browserData<-reactive({
-      if (input$tabs == "RNASEQ") {
-        bData<-r$browser
-      } else if (input$tabs == "CHIPSEQ") {
-        bData<-getChIPBrowserData()
+     if (input$tabs == "Timeseries_tabs") { 
+      if (input$Timeseries_tabs == "RNASEQ") {
+         # bData<-r$browser
+          bData<-rnaseq.browser
+        } else if (input$Timeseries_tabs == "CHIPSEQ") {
+          bData<-getChIPBrowserData()
+        }
+     } else if (input$tabs == "Tet1") { 
+      if( input$Tet1_tabs == "Tet1_RNASeq") {
+          bData<-Tet1_rnaseq.browser
+      } else if (input$Tet1_tabs == "Tet1_ChIPSeq") {
+          bData<-getChIPBrowserData()
+        }
       }
     })
    
@@ -140,18 +157,30 @@ shinyServer(function(input, output, session) {
             aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
      )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
    })
-
+   
+  output$TetRNASeqTable<-renderDataTable({
+    tetDataTable()
+  },options = list(lengthMenu = c(5, 10, 20),pageLength = 10))
+  
   #Self explanitory:  
   output$downloadData <- downloadHandler(
     filename = function() { paste('shinydata', '.csv', sep='') },
     content = function(file) {
-      write.csv(dataForSession(), file)
+      write.csv(dataForPlot(), file)
+    }
+  )
+  
+  output$downloadDataTetRNA<-downloadHandler(
+    filename = function(){paste ('shinydata','.csv',sep='')},
+    content = function(file){
+      write.csv(tetDataTable(),file)
     }
   )
   
   #Code to produce the Dalliance HTML widget
   #Gene name provided by text at the moment, need to wire this in to user choices:
   
+  #tracks<-browserData()
   output$dalliance<-renderDalliancR(dalliancR("Ascl2",browserData()))
   #output$dallianceCHIP<-renderDalliancR(dalliancR())
   
@@ -165,5 +194,5 @@ shinyServer(function(input, output, session) {
     }
   },options = list(lengthMenu = c(5, 10, 20), pageLength = 10))
   
-
+output$noData<-renderText({"There doesn't seem to be any data associated with this panel. If you think there should be, please get in touch."})
 })
