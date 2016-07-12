@@ -56,7 +56,7 @@ shinyUI(navbarPage("Hemberger Lab Portal", id = "tabs",
             downloadButton('downloadDataTetRNA',"Download current data")
             ), #end sidebarPanel
           mainPanel(
-            dataTableOutput('TetRNASeqTable')
+            dataTableOutput('Table1')
             )
           )
         ),#end tabPanel TetRNASeq
@@ -70,13 +70,14 @@ shinyUI(navbarPage("Hemberger Lab Portal", id = "tabs",
               choices = list("None" = 100, "Tet1" = 1, "7C Tet1 KO" = 2, "Tet1 WT/KO Overlaps" = 3)
               ),
             radioButtons("dataOperation", label = h4("Display in table:"),
-              choices = list("Overlap" = 1, "Difference" = 2)
+              #choices = list("Overlap" = 1, "Difference" = 2)
+              choices = list("Overlap" = 1)
               ),
             actionButton("goChIPButton", "Compare peaks"),
             tags$style(type="text/css", ".tab-content { overflow: visible; }")
             ),
           mainPanel(
-            dataTableOutput('chipTable'),
+            dataTableOutput('Table2'),
             tags$style(type="text/css", ".tab-content { overflow: visible; }")
             )#end mainPanel
           ) #end sidebarLayout
@@ -87,7 +88,8 @@ shinyUI(navbarPage("Hemberger Lab Portal", id = "tabs",
   #The dalliancR output object is distinct from the tab structure. This enables reactive setting of the tracks 
   #within the browser object and therefore reuse of the dalliance output object. 
   # (Trying to use one output object across different tabs, and setting the value reactively doesn't seem to work,
-  # not just for dalliance output object but also e.g. renderDataTable)
+  # not just for dalliance output object but also e.g. renderDataTable. At some point I could just have one output structure in one tabset
+  #: sidebar, graph/table window and then I could control the contents reactively.)
   dalliancROutput("dalliance",width="100%", height="100%") 
   )
 )

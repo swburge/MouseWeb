@@ -16,25 +16,12 @@ library(ChIPpeakAnno)
 #General data:
 mm10.genes<- readRDS("data/mm10.Gene.Label.Data.rds")
 
-#RNASeq experiment data:
-rnaseq.data<-list(geneLogFoldData = "data/all.geneLogFoldData.rds",
-               geneNormalizedCountData = "data/all.geneNormalizedCountData.rds",
-               top20Up.gn = "data/top20Up.rds",
-               top20.gn = "data/top20.superstem.rds"
-               )
-rnaseq.browser<-fromJSON(file="data/rnaseq_data.json")
+#Experiment data:
+TimeSeries.data<-fromJSON(file="data/TimeSeries.json")
 
-Tet1_wt.data<-list(gr.df = "data/R26_Tet1_wt.rds",
-                   gr = "data/R26_Tet1_wt.gr.rds")
-Tet1_7C_KO.data<-list(gr.df = "data/Tet1_7C.KO.rds",
-                      gr = "data/Tet1_7C_KO.gr.rds")
-chipseq.library<-list(Tet1_wt.data,Tet1_7C_KO.data)
 ChIPSeqMetaData<-list("No data" = 100, "Tet1" = 1,"7C Tet1 KO" = 2,"Tet1 WT/KO Overlaps" = 3)
-chipseq.data<-fromJSON(file="data/chipseq_data.json")
-Tet1_wt.chip<-readRDS("data/R26_Tet1_wt.rds")
-Tet1_rnaseq.browser<-fromJSON(file="data/Tet1_rnaseq.json")
-Tet1_rnaseq.data<-fromJSON(file="data/Tet1_rnaseq_data.json")
 
+Tet1.data<-fromJSON(file="data/Tet1.json")
 
 shinyServer(function(input, output, session) {
   
@@ -45,25 +32,22 @@ shinyServer(function(input, output, session) {
   #Now set up browser data for the RNAseq tab:
   #Could modify this to also set ChIPseq data
   #but that is more complicated as ChIPseq browser data not static (depends on user selected experiment:)
- # observeEvent(input$tabs == "RNASEQ", {
-#    r$browser <- rnaseq.browser
-#  })
   
   #Now wait for user to select logfold vs normalized counts:
   observeEvent(input$dataType,{
     if (input$dataType == "1"){
-      r$data <- readRDS(rnaseq.data$geneLogFoldData)
+      r$data <- readRDS(TimeSeries.data$geneLogFoldData)
     } else if (input$dataType == "2") {
-      r$data <- readRDS(rnaseq.data$geneNormalizedCountData)
+      r$data <- readRDS(TimeSeries.data$geneNormalizedCountData)
     }
   })
   
   #Does the user want to use any precompiled data?:
   observe ({
     if( input$precompiled ==2) {
-       updateTextInput(session, "geneSymbol", value = readRDS("data/top20.superstem.rds"))
+       updateTextInput(session, "geneSymbol", value = readRDS(TimeSeries.data$top20Superstem.gn))
     } else if (input$precompiled ==3) {
-       updateTextInput(session, "geneSymbol", value = readRDS("data/top20Up.rds"))
+       updateTextInput(session, "geneSymbol", value = readRDS(TimeSeries.data$top20Up.gn))
     }
   })
   
@@ -91,11 +75,11 @@ shinyServer(function(input, output, session) {
   #end dataForPlot, and most RNASeqtab stuff
   
   #Now for the ChIPseq panel:
-  
   getChIPBrowserData<-reactive({
     chipIndex<-c(input$chipdata,input$chipdata2)
     x<-chipIndex[chipIndex!=100]
-    data<-chipseq.data[as.numeric(x)]
+    #data<-chipseq.data[as.numeric(x)]
+    data<-Tet1.data$`ChIPSeq bigWig data tracks`[as.numeric(x)]
   })
   
   observeEvent(input$chipdata,{
@@ -115,54 +99,80 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session,"chipdata2",choices = newChoices)
   })
   
+  #Run peak comparison (this awaits user click to start as it is time consuming)
   comparedPeaks<-eventReactive(input$goChIPButton, {
-    foo<-findOverlapsOfPeaks(reduce(readRDS(chipseq.library[[1]]$gr)),reduce(readRDS(chipseq.library[[2]]$gr)))
+    foo<-findOverlapsOfPeaks(reduce(readRDS(Tet1.data$`ChIPSeq peak lists`[[1]]$genomicRanges)),reduce(readRDS(Tet1.data$`ChIPSeq peak lists`[[2]]$genomicRanges)))
     foo<-foo$peaklist[[3]]
     foo<-as.data.frame(foo)
     return(foo)
-      })
-  
-  tetDataTable<-reactive({
-    x<-input$tetData
-    f<-Tet1_rnaseq.data[[as.numeric(x)]]$file
-    return(readRDS(f))
   })
-  
-
-  #tracks<-reactiveValues(rnaseq.browser)
     
-  #Get data for genome browser:
-   browserData<-reactive({
+  #Reactive statement to dynamically build genome browser data:
+  browserData<-reactive({
      if (input$tabs == "Timeseries_tabs") { 
       if (input$Timeseries_tabs == "RNASEQ") {
          # bData<-r$browser
-          bData<-rnaseq.browser
+          bData<-TimeSeries.data$BrowserTracks
         } else if (input$Timeseries_tabs == "CHIPSEQ") {
           bData<-getChIPBrowserData()
         }
      } else if (input$tabs == "Tet1") { 
       if( input$Tet1_tabs == "Tet1_RNASeq") {
-          bData<-Tet1_rnaseq.browser
+          bData<-Tet1.data$`RNASeq tracks`
       } else if (input$Tet1_tabs == "Tet1_ChIPSeq") {
           bData<-getChIPBrowserData()
         }
       }
     })
    
+  #Generate table data for different situations
+  #First there are individual functions to generate 
+  #the data based on the experiment chosen.
+  #Then tableData is used to decide on which experiment is being used
+  
+  #Tet RNASeq table data:
+  tetDataTable<-reactive({
+    x<-input$tetData
+    f<-Tet1.data$`RNASeq comparison table data`[[as.numeric(x)]]$file
+    return(readRDS(f))
+  })
+  #Now the ChIPSeq data:
+  tetChIPTable<-reactive({
+    #Default is plain old data for which no comparison has been made:
+    if(input$goChIPButton == 0){
+      #Tet1_wt.chip[,c(1,2,3,4,12,13,16)]
+      t<-readRDS(Tet1.data$`ChIPSeq peak lists`[[1]]$dataFrame)
+      t[,c(1,2,3,4,12,13,16)]
+      } else {
+      comparedPeaks()
+    }
+  })
+  
+  #Reactive statement to dynamically generate table data:
+  tableData<- reactive({if (input$tabs == "Timeseries_tabs") { 
+    if (input$Timeseries_tabs == "RNASEQ") {
+      #insert table here if needed
+    } else if (input$Timeseries_tabs == "CHIPSEQ") {
+      #insert table here if needed
+    }
+  } else if (input$tabs == "Tet1") { 
+    if( input$Tet1_tabs == "Tet1_RNASeq") {
+      tData<-tetDataTable()
+    } else if (input$Tet1_tabs == "Tet1_ChIPSeq") {
+      tData<-tetChIPTable()
+    }
+  }})
+   
 #Outputs: from here on this is all about making things look pretty:
   
   #Plot RNAseq data over time series:
-   output$plotRNASeq <-renderPlot ({
+  output$plotRNASeq <-renderPlot ({
      ggplot(dataForPlot(),
             aes(x=Day,y=value,color=geneID,group=interaction(geneID,cellType)),
      )+geom_point(aes(shape=factor(cellType)))+stat_smooth(se=FALSE)
    })
-   
-  output$TetRNASeqTable<-renderDataTable({
-    tetDataTable()
-  },options = list(lengthMenu = c(5, 10, 20),pageLength = 10))
   
-  #Self explanitory:  
+  #Download handlers:  
   output$downloadData <- downloadHandler(
     filename = function() { paste('shinydata', '.csv', sep='') },
     content = function(file) {
@@ -180,19 +190,15 @@ shinyServer(function(input, output, session) {
   #Code to produce the Dalliance HTML widget
   #Gene name provided by text at the moment, need to wire this in to user choices:
   
-  #tracks<-browserData()
   output$dalliance<-renderDalliancR(dalliancR("Ascl2",browserData()))
-  #output$dallianceCHIP<-renderDalliancR(dalliancR())
   
-  output$chipTable<-renderDataTable({
-    #Tet1_wt.chip[,c(1,2,3,4,12,13,16)]
-    #as.data.frame(comparedPeaks()$peaklist[[3]])
-    if(input$goChIPButton == 0){
-      Tet1_wt.chip[,c(1,2,3,4,12,13,16)]
-    } else {
-      comparedPeaks()
-    }
-  },options = list(lengthMenu = c(5, 10, 20), pageLength = 10))
+  #Table outputs.
+  #The cascading of function to Table1, Table2 etc is to avoid Shiny crashing
+  #if you reuse an output name. Have to do this instead of just having
+  # an output$Table; can't reuse output$Table in two tabsets in the ui.R
+  output$Table1<-output$Table2<-renderDataTable({
+    tableData()
+  },options = list(lengthMenu  = c(5,10,20),pageLength=5))
   
-output$noData<-renderText({"There doesn't seem to be any data associated with this panel. If you think there should be, please get in touch."})
+  output$noData<-renderText({"There doesn't seem to be any data associated with this panel. If you think there should be, please get in touch."})
 })
